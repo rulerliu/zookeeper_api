@@ -23,7 +23,39 @@ public class Test003 {
     public static void main(String[] args) throws InterruptedException, KeeperException, IOException, NoSuchAlgorithmException {
 
 //        test();
-        test2();
+//        test2();
+        test3();
+    }
+
+    private static void test3() throws InterruptedException, KeeperException, IOException, NoSuchAlgorithmException  {
+        // 1.创建zooKeeper连接
+        ZooKeeper zooKeeper = new ZooKeeper(ADDRES, TIMEOUT, new Watcher() {
+            public void process(WatchedEvent watchedEvent) {
+                Event.KeeperState state = watchedEvent.getState();
+                System.out.println(state.name());
+                if (state == Event.KeeperState.SyncConnected) {
+                    System.out.println(">>>zk连接成功");
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        System.out.println(">>>zk正等待连接");
+        countDownLatch.await();
+        System.out.println(">>>开始获取数据");
+
+        // 2.设置zk连接账号
+        zooKeeper.addAuthInfo("digest", "admin:admin123".getBytes());
+
+        byte[] bytes = zooKeeper.getData("/memberservice", null, new Stat());
+        System.out.println(">>>data:" + new String(bytes));
+
+        Stat stat = zooKeeper.setData("/memberservice", "mayikt3".getBytes(), -1);
+        System.out.println(stat);
+
+        bytes = zooKeeper.getData("/memberservice", null, new Stat());
+        System.out.println(">>>data:" + new String(bytes));
+
     }
 
     private static void test2() throws InterruptedException, KeeperException, IOException, NoSuchAlgorithmException  {
